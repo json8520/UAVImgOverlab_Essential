@@ -13,6 +13,8 @@ struct EOP {
 	double Kappa;
 };
 
+Mat SetRotationMatrix(EOP eop);
+
 int main()
 {
 
@@ -80,9 +82,32 @@ int main()
 	//********************************************************
 	// 4. Calcurate Overlap using Essential Matrix  
 	//********************************************************
+	Mat imgCorner_left[4], imgCorner_right[4];
+
+	imgCorner_left[0] = (Mat_<double>(3, 1) << 0, 0, 1);
+	imgCorner_left[1] = (Mat_<double>(3, 1) << leftIMG.cols - 1, 0, 1);
+	imgCorner_left[2] = (Mat_<double>(3, 1) << 0, leftIMG.rows - 1, 1);
+	imgCorner_left[3] = (Mat_<double>(3, 1) << leftIMG.cols - 1, leftIMG.rows - 1, 1);
+
+	imgCorner_right[0] = (Mat_<double>(3, 1) << 0, 0, 1);
+	imgCorner_right[1] = (Mat_<double>(3, 1) << rightIMG.cols - 1, 0, 1);
+	imgCorner_right[2] = (Mat_<double>(3, 1) << 0, rightIMG.rows - 1, 1);
+	imgCorner_right[3] = (Mat_<double>(3, 1) << rightIMG.cols - 1, rightIMG.rows - 1, 1);
+
+	Mat K;
+	double focal = 18.0;
+	double dPixel = 0.00479;
+	Point2d pricipal_point = Point2d(2464, 1632);
+
+	K = (Mat_<double>(3, 3)
+		<< dPixel / focal, 0, -1 * pricipal_point.x*dPixel / focal
+		, 0, dPixel / focal, -1 * pricipal_point.y*dPixel / focal
+		, 0, 0, 1);
+
+	Mat result = imgCorner_left[1].t() * K.t() * E_EOP * K * imgCorner_right[1];
 
 
-    return 0;
+	return 0;
 }
 
 
@@ -112,7 +137,7 @@ Mat SetRotationMatrix(EOP eop) {
 	RMat_Z.at<double>(1, 1) = cos(eop.Kappa);
 
 	RMat = RMat_X*RMat_Y*RMat_Z;	// 3-2-1 Rotation System
-									//RMat = RMat_Z*RMat_Y*RMat_X;	// 1-2-3 Rotation System
+	//RMat = RMat_Z*RMat_Y*RMat_X;	// 1-2-3 Rotation System
 
 	return RMat;
 }
